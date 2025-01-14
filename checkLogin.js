@@ -1,33 +1,33 @@
-let isUserLoggedIn = false;
+let userAuthenticated = false;
 
-function verifyLogin() {
+function validateUserSession() {
   const authToken = localStorage.getItem("token");
-  const apiEndpoint = "http://localhost:3000/api/users/check"; // Endpoint pour vérifier l'utilisateur
+  const verificationUrl = "http://localhost:3000/api/users/check"; // URL pour valider l'utilisateur
 
-  // Vérifie si le token est présent
+  // Vérifie si le token est présent dans le stockage local
   if (!authToken) {
-    console.log("Aucun token trouvé.");
+    console.log("Token non trouvé.");
     return;
   }
 
-  fetch(apiEndpoint, {
+  fetch(verificationUrl, {
     method: "POST",
     headers: {
-      "x-api-key": "secret_key_here", // Remplacer par votre clé API
+      "x-api-key": "replace_with_your_api_key", // Remplacez par votre clé API
       "Authorization": `Bearer ${authToken}`,
       "Content-Type": "application/json",
       "Accept": "application/json",
     },
-    body: JSON.stringify({ action: "verify" }),
+    body: JSON.stringify({ action: "validate" }),
   })
     .then((response) => {
       if (!response.ok) {
-        throw new Error("Erreur d'authentification");
+        throw new Error("Erreur d'identification");
       }
-      return response.json().then((result) => {
-        console.log(result);
-        isUserLoggedIn = true; // L'utilisateur est authentifié
-        updateHeaderForLoggedInUser(result);
+      return response.json().then((userData) => {
+        console.log(userData);
+        userAuthenticated = true; // Marque l'utilisateur comme connecté
+        updateHeaderForAuthenticatedUser(userData);
       });
     })
     .catch((err) => {
@@ -35,46 +35,47 @@ function verifyLogin() {
     });
 }
 
-function updateHeaderForLoggedInUser(userInfo) {
+function updateHeaderForAuthenticatedUser(userData) {
   if (window.location.pathname !== "/") {
-    window.location.href = "/"; // Rediriger vers la page principale si nécessaire
+    window.location.href = "/"; // Redirige vers la page principale si nécessaire
   }
 
-  const headerElement = document.querySelector("header"); // Mettre à jour le contenu du header
+  const headerElement = document.querySelector("header"); // Sélectionne l'en-tête pour modification
 
   const userAvatar = localStorage.getItem("img");
   headerElement.innerHTML = `
     <a href="/" class="d-flex align-items-center text-light text-decoration-none bg-secondary p-3">
-      <h1 class="fs-4 mb-0">Games</h1>
+      <span class="fs-4 text-center">Games</span>
     </a>
-    <button class="btn p-3 logout-button text-light">
-      <span class="fs-4">Se Déconnecter</span>
+    <button class="d-flex align-items-center text-light text-decoration-none btn p-3 logout-btn">
+      <span class="fs-4 text-center">Déconnexion</span>
     </button>
 
     <div class="dropdown position-relative">
       <a href="#" class="d-flex align-items-center text-light text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
         <img src="${userAvatar}" alt="User Avatar" width="32" height="32" class="rounded-circle me-2">
-        <strong>${userInfo.username}</strong>
+        <strong>${userData.username}</strong>
       </a>
       <ul class="dropdown-menu dropdown-menu-dark shadow">
         <li><a class="dropdown-item" href="#">Ajouter une voiture...</a></li>
         <li><a class="dropdown-item" href="#">Profil</a></li>
         <li><hr class="dropdown-divider"></li>
-        <li><button class="dropdown-item logout-button">Se Déconnecter</button></li>
+        <li><button class="dropdown-item logout-btn">Se déconnecter</button></li>
       </ul>
     </div>
   `;
 
-  const logoutButtons = document.querySelectorAll(".logout-button");
-  logoutButtons.forEach((logoutBtn) => {
-    logoutBtn.addEventListener("click", () => {
+  const logoutButtons = document.querySelectorAll(".logout-btn");
+  logoutButtons.forEach((logoutButton) => {
+    logoutButton.addEventListener("click", () => {
       localStorage.removeItem("_id");
       localStorage.removeItem("token");
       localStorage.removeItem("img");
-      window.location.href = "./index.html"; // Redirection après déconnexion
+      window.location.href = "./index.html"; // Redirige après déconnexion
     });
   });
 }
 
-// Appel de la fonction pour vérifier l'état de connexion à chaque chargement de page
-verifyLogin();
+// Appelle la fonction pour vérifier l'état de connexion à chaque chargement de page
+validateUserSession();
+
